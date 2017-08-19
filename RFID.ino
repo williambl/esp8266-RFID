@@ -1,15 +1,18 @@
 #include "MFRC522.h"
 #define RST_PIN  5 // RST-PIN for RC522 - RFID - SPI - Modul GPIO5 
 #define SS_PIN  D8 // SDA-PIN for RC522 - RFID - SPI - Modul GPIO4 
-#define OUTPUT_PIN D1
+const int correct_output_pin = D1;
+const int incorrect_output_pin = D2;
 MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
 const String allowed_card = String(" b5 43 d7 1b");
 
 void setup() {
   pinMode(BUILTIN_LED, OUTPUT);  // initialize onboard LED as output
-  pinMode(OUTPUT_PIN, OUTPUT);
+  pinMode(correct_output_pin, OUTPUT);
+  pinMode(incorrect_output_pin, OUTPUT);
   digitalWrite(BUILTIN_LED, HIGH);   // turn off LED with voltage HIGH
-  digitalWrite(OUTPUT_PIN, LOW);
+  digitalWrite(correct_output_pin, LOW);
+  digitalWrite(incorrect_output_pin, LOW);
   Serial.begin(9600);    // Initialize serial communications
   SPI.begin();           // Init SPI bus
   mfrc522.PCD_Init();    // Init MFRC522
@@ -17,6 +20,7 @@ void setup() {
 
 void loop() {
   bool isCorrectCard = false;
+  bool isIncorrectCard = false;
   // Look for new cards
   if ( ! mfrc522.PICC_IsNewCardPresent()) {
     delay(50);
@@ -33,14 +37,23 @@ void loop() {
     Serial.println();
 
     isCorrectCard = (picc_uid  == allowed_card);
+    isIncorrectCard = !isCorrectCard;
   }
 
   if (isCorrectCard) {
     digitalWrite(BUILTIN_LED, LOW);  // turn on LED with voltage LOW
-    digitalWrite(OUTPUT_PIN, HIGH);
+    digitalWrite(correct_output_pin, HIGH);
   } else {
     digitalWrite(BUILTIN_LED, HIGH);  // turn on LED with voltage LOW
-    digitalWrite(OUTPUT_PIN, LOW);
+    digitalWrite(correct_output_pin, LOW);
+  }
+
+  if (isIncorrectCard) {
+    digitalWrite(BUILTIN_LED, LOW);  // turn on LED with voltage LOW
+    digitalWrite(incorrect_output_pin, HIGH);
+  } else {
+    digitalWrite(BUILTIN_LED, HIGH);  // turn on LED with voltage LOW
+    digitalWrite(incorrect_output_pin, LOW);
   }
 }
 

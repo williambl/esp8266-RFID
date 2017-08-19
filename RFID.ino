@@ -9,35 +9,37 @@ void setup() {
   pinMode(BUILTIN_LED, OUTPUT);  // initialize onboard LED as output
   pinMode(OUTPUT_PIN, OUTPUT);
   digitalWrite(BUILTIN_LED, HIGH);   // turn off LED with voltage HIGH
-  digitalWrite(OUTPUT_PIN, HIGH);
+  digitalWrite(OUTPUT_PIN, LOW);
   Serial.begin(9600);    // Initialize serial communications
   SPI.begin();           // Init SPI bus
   mfrc522.PCD_Init();    // Init MFRC522
 }
 
-void loop() { 
+void loop() {
+  bool isCorrectCard = false;
   // Look for new cards
   if ( ! mfrc522.PICC_IsNewCardPresent()) {
-    digitalWrite(BUILTIN_LED, HIGH);   // turn off LED with voltage HIGH
-    digitalWrite(OUTPUT_PIN, HIGH);
     delay(50);
-    return;
-  }
-  // Select one of the cards
-  if ( ! mfrc522.PICC_ReadCardSerial()) {
-    digitalWrite(BUILTIN_LED, HIGH);   // turn off LED with voltage HIGH
-    digitalWrite(OUTPUT_PIN, HIGH);
-    delay(50);
-    return;
-  }
-  // Show some details of the PICC (that is: the tag/card)
-  String picc_uid = dump_byte_array(mfrc522.uid.uidByte, mfrc522.uid.size);
-  Serial.print(F("Card UID:"));
-  Serial.print(picc_uid);
-  Serial.println();
+  } else {
+    // Select one of the cards
+    if ( ! mfrc522.PICC_ReadCardSerial()) {
+      delay(50);
+      return;
+    }
+    // Show some details of the PICC (that is: the tag/card)
+    String picc_uid = dump_byte_array(mfrc522.uid.uidByte, mfrc522.uid.size);
+    Serial.print(F("Card UID:"));
+    Serial.print(picc_uid);
+    Serial.println();
 
-  if (picc_uid  == allowed_card) {
+    isCorrectCard = (picc_uid  == allowed_card);
+  }
+
+  if (isCorrectCard) {
     digitalWrite(BUILTIN_LED, LOW);  // turn on LED with voltage LOW
+    digitalWrite(OUTPUT_PIN, HIGH);
+  } else {
+    digitalWrite(BUILTIN_LED, HIGH);  // turn on LED with voltage LOW
     digitalWrite(OUTPUT_PIN, LOW);
   }
 }

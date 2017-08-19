@@ -76,7 +76,6 @@ void loop() {
   // Look for new cards
   if ( ! mfrc522.PICC_IsNewCardPresent()) {
     delay(50);
-    response = "No card!";
   } else {
     // Select one of the cards
     if ( ! mfrc522.PICC_ReadCardSerial()) {
@@ -88,10 +87,16 @@ void loop() {
     Serial.print(F("Card UID:"));
     Serial.print(picc_uid);
     Serial.println();
-    response = picc_uid;
+    response = picc_uid + "\n";
 
     isCorrectCard = (picc_uid  == allowed_card);
     isIncorrectCard = !isCorrectCard;
+
+    if (isCorrectCard) {
+      response += "Correct Card!";
+    } else if (isIncorrectCard) {
+      response += "Incorrect Card.";
+    }
   }
 
   if (isCorrectCard) {

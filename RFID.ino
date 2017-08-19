@@ -1,6 +1,7 @@
 #include "MFRC522.h"
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
+#include <DNSServer.h>
 
 #define RST_PIN  5 // RST-PIN for RC522 - RFID - SPI - Modul GPIO5 
 #define SS_PIN  D8 // SDA-PIN for RC522 - RFID - SPI - Modul GPIO4 
@@ -11,8 +12,14 @@ const String allowed_card = String(" b5 43 d7 1b");
 
 const char* ssid     = "";
 const char* password = "";
+const bool isAP = true;
+IPAddress apIP(192,168,1,1);
+IPAddress gateway(192,168,1,1);
+IPAddress subnet(255,255,255,0);
+const byte DNS_PORT = 53;
 
-ESP8266WebServer server(80);
+ESP8266WebServer webServer(80);
+DNSServer dnsServer;
 
 bool isCorrectCard = false;
 bool isIncorrectCard = false;
@@ -30,16 +37,37 @@ void setup() {
   SPI.begin();           // Init SPI bus
   mfrc522.PCD_Init();    // Init MFRC522
 
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
+  if (isAP) {
+      WiFi.mode(WIFI_AP);
+      Serial.println("Cannot connect to WiFi network. Creating access point.");
+      
+      Serial.print("Setting soft-AP configuration ... ");
+      Serial.println(WiFi.softAPConfig(apIP, gateway, subnet) ? "Ready" : "Failed!");
+
+      Serial.print("Setting soft-AP ... ");
+      Serial.println(WiFi.softAP("ESP8266 RFID Tester") ? "Ready" : "Failed!");
+
+      Serial.print("Soft-AP IP address = ");
+      Serial.println(WiFi.softAPIP());
+
+      Serial.print("Starting DNS server for captive portal...");
+      dnsServer.start(DNS_PORT, "*", apIP);
+  } else {
+    WiFi.begin(ssid, password);
+
+    int wifi_timer = 0;
+    while (WiFi.status() != WL_CONNECTED) {
+      delay(500);
+      Serial.print(".");
+      wifi_timer++;
+    }
+    Serial.println(WiFi.localIP());
   }
 
-  Serial.println(WiFi.localIP());
-
-  server.on("/", showWebpage);
-  server.begin();
+  webServer.onNotFound([]() {
+    webServer.send(200, "text/html", response);
+  });
+  webServer.begin();
 }
 
 void loop() {
@@ -81,7 +109,8 @@ void loop() {
     digitalWrite(incorrect_output_pin, LOW);
   }
 
-  server.handleClient();
+  dnsServer.processNextRequest();
+  webServer.handleClient();
 }
 
 // Helper routine to dump a byte array as hex values to a string
@@ -95,5 +124,5 @@ String dump_byte_array(byte *buffer, byte bufferSize) {
 }
 
 void showWebpage() {
-  server.send(200, "text/html", " <meta http-equiv=\"refresh\" content=\"1\" />" + response);
+  webServer.send(200, "text/html", " <meta http-equiv=\"refresh\" content=\"1\" />" + response);
 }

@@ -65,7 +65,7 @@ void setup() {
   }
 
   webServer.onNotFound([]() {
-    webServer.send(200, "text/html", response);
+    webServer.send(200, "text/html", " <meta http-equiv=\"refresh\" content=\"1\" />" + response);
   });
   webServer.begin();
 }
@@ -76,6 +76,7 @@ void loop() {
   // Look for new cards
   if ( ! mfrc522.PICC_IsNewCardPresent()) {
     delay(50);
+    response = "No card!";
   } else {
     // Select one of the cards
     if ( ! mfrc522.PICC_ReadCardSerial()) {
@@ -121,8 +122,4 @@ String dump_byte_array(byte *buffer, byte bufferSize) {
     string += String(buffer[i], HEX);
   }
   return string;
-}
-
-void showWebpage() {
-  webServer.send(200, "text/html", " <meta http-equiv=\"refresh\" content=\"1\" />" + response);
 }

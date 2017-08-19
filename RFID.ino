@@ -9,8 +9,8 @@ const int incorrect_output_pin = D2;
 MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
 const String allowed_card = String(" b5 43 d7 1b");
 
-const char* ssid     = "BTHub4-RW23";
-const char* password = "9297e5b238";
+const char* ssid     = "";
+const char* password = "";
 
 ESP8266WebServer server(80);
 

@@ -95,5 +95,5 @@ String dump_byte_array(byte *buffer, byte bufferSize) {
 }
 
 void showWebpage() {
-  server.send(200, "text/plain", response);
+  server.send(200, "text/html", " <meta http-equiv=\"refresh\" content=\"1\" />" + response);
 }
